@@ -1,0 +1,59 @@
+---
+apic:
+  tenants:
+    - name: conmurph
+      managed: false
+
+      l3outs:
+
+        - name: floating-l3out-to-firewall
+          vrf: vrf-01
+          domain: conmurph.vrf-01
+          ospf:
+            area: 0
+            area_type: regular
+
+          node_profiles:
+            - name: border-leafs
+              nodes:
+                - node_id: 101
+                  router_id: 101.2.1.1
+                - node_id: 102
+                  router_id: 102.2.1.1
+
+              interface_profiles:
+                - name: ucsc-c220m5-vds-01
+                  ospf:
+                    policy: floating-l3out-to-firewall
+
+                  interfaces: # floating SVI
+                    - node_id: 101
+                      vlan: 500
+                      floating_svi: true
+                      ip: 172.16.100.1/24
+                      paths: 
+                        - vmware_vmm_domain: ucsc-c220m5-vds-01
+                          floating_ip: 172.16.100.3/24
+                    - node_id: 102
+                      vlan: 500
+                      floating_svi: true
+                      ip: 172.16.100.2/24
+                      paths: 
+                        - vmware_vmm_domain: ucsc-c220m5-vds-01
+                          floating_ip: 172.16.100.3/24
+
+          external_endpoint_groups:
+            - name: all-ext-subnets
+              contracts: 
+                providers:
+                  - to-firewall-l3out
+              subnets:
+                - prefix: 0.0.0.0/1
+                - prefix: 128.0.0.0/1
+
+      policies:
+
+        ospf_interface_policies:
+          - name: floating-l3out-to-firewall
+            network_type: bcast
+
